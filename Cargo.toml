@@ -1,0 +1,13 @@
+[package]
+name = "nom-pem"
+version = "1.0.0"
+authors = ["d.maetzke@bpressure.net"]
+include = ["LICENSE", ".gitignore", "Cargo.toml", "src/*.rs"]
+description = "PEM parser (rfc1421) based of nom"
+keywords = ["parser", "parsing", "PEM", "rfc1421", "nom" ]
+categories = ["PEM"]
+license = "MIT"
+repository = "https://github.com/Geal/nom"
+
+[dependencies]
+nom = "^3.2"
