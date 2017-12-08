@@ -2,7 +2,7 @@
 name = "nom-pem"
 version = "1.0.0"
 authors = ["d.maetzke@bpressure.net"]
-include = ["LICENSE", ".gitignore", "Cargo.toml", "src/*.rs"]
+include = ["LICENSE", ".gitignore", "Cargo.toml", "src/*.rs", "README.md"]
 description = "PEM parser (rfc1421) based of nom"
 keywords = ["parser", "parsing", "PEM", "rfc1421", "nom" ]
 categories = ["PEM"]
