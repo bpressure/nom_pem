@@ -36,7 +36,7 @@
 extern crate nom;
 
 mod parsers;
-mod headers;
+pub mod headers;
 mod display;
 
 use std::str;
