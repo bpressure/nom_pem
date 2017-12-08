@@ -2,7 +2,7 @@
 //! See RFC 1421 for details.
 //! It supports PEM messages with headers as well as without.
 //!
-//! Based on nom as a parser combinator (https://github.com/Geal/nom).
+//! Based on nom as a parser combinator https://github.com/Geal/nom
 //!
 //!
 //!```
@@ -41,6 +41,7 @@ mod display;
 
 use std::str;
 use self::parsers::*;
+pub use self::headers::{HeaderEntry, RFC1423Algorithm, ProcTypeType};
 use self::headers::*;
 use self::display::{write_base64, write_headers};
 use std::fmt;
@@ -56,6 +57,7 @@ pub struct Block<'a> {
     pub headers: Vec<HeaderEntry<'a>>,
     pub data: Vec<u8>
 }
+
 
 #[derive(Debug)]
 pub enum PemParsingError {

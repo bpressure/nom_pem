@@ -45,10 +45,16 @@ dXd/H5LMDWnonNvPCwQUHt==
     assert_eq!(result.block_type, "PRIVACY-ENHANCED MESSAGE");
     assert_eq!(result.data.len(), 160);
     assert_eq!(result.headers.len(), 8);
-    assert_eq!(result.headers[2],
-               HeaderEntry::Entry("DEK-Info", vec!(
-                   String::from("DES-CBC"),
-                   String::from("F8143EDE5960C597"))));
+    let dekinfo = &result.headers[2];
+    match dekinfo {
+        HeaderEntry::DEKInfo(alg, iv) => {
+            assert_eq!(&RFC1423Algorithm::DES_CBC, alg);
+            assert_eq!(8, alg.block_size());
+            assert_eq!(8, alg.key_size());
+            assert_eq!(&vec![248u8, 20, 62, 222, 89, 96, 197, 151], iv);
+        }
+        _ => panic!("DEKInfo expected")
+    }
     assert_eq!(&result.data[0..8], &[44u8, 186, 199, 7, 71, 137, 207, 40][..]);
     assert_eq!(&result.data[150..160], &[13u8, 105, 232, 156, 219, 207, 11, 4, 20, 30][..]);
 }

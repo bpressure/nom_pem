@@ -1,11 +1,11 @@
 [package]
 name = "nom_pem"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["d.maetzke@bpressure.net"]
 include = ["LICENSE", ".gitignore", "Cargo.toml", "src/*.rs", "README.md"]
 description = "PEM parser (rfc1421) based of nom"
-keywords = ["parser", "parsing", "PEM", "rfc1421", "nom" ]
-categories = ["PEM"]
+keywords = ["parser", "parsing", "pem", "rfc1421", "nom" ]
+categories = ["parsing"]
 license = "MIT"
 repository = "https://github.com/bpressure/nom_pem"
 
