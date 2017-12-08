@@ -24,7 +24,7 @@
 //!dXd/H5LMDWnonNvPCwQUHt==
 //!-----END PRIVACY-ENHANCED MESSAGE-----";
 //!
-//!let block = decode_block(b).unwrap();
+//!let block = nom_pem::decode_block(b).unwrap();
 //!
 //!assert_eq!(block.block_type, "PRIVACY-ENHANCED MESSAGE");
 //!assert_eq!(block.data.len(), 160);
