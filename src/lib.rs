@@ -52,9 +52,9 @@ mod test;
 /// structure representing one PEM block
 #[derive(Debug)]
 pub struct Block<'a> {
-    block_type: &'a str,
-    headers: Vec<HeaderEntry<'a>>,
-    data: Vec<u8>
+    pub block_type: &'a str,
+    pub headers: Vec<HeaderEntry<'a>>,
+    pub data: Vec<u8>
 }
 
 #[derive(Debug)]
@@ -88,4 +88,3 @@ impl<'a> fmt::Display for Block<'a> {
         write!(f, "-----END {}-----\n", &self.block_type)
     }
 }
-
