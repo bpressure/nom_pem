@@ -17,13 +17,17 @@ named!(pub pem_header_value<Vec<String>>,  do_parse!(
         v2
     })
     ));
+
+use nom::digit;
+named!(u8_digit<u8>,map_res!(map_res!(digit,str::from_utf8),str::FromStr::from_str));
 named!(pub pem_header_proctype<HeaderEntry>,  do_parse!(
     tag!("Proc-Type:") >>
     spaces >>
-    tag!("4,") >>
+    code: u8_digit >>
+    tag!(",") >>
     t: pem_proctype >>
     value: pem_header_value >>
-    (HeaderEntry::ProcType(4, t))
+    (HeaderEntry::ProcType(code, t))
     ));
 named!(pub pem_proctype<ProcTypeType>,  alt!(
     do_parse!(tag!("ENCRYPTED") >> (ProcTypeType::ENCRYPTED)) |
