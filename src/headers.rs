@@ -34,7 +34,7 @@ use RFC1423Algorithm::*;
 
 impl RFC1423Algorithm {
     pub fn key_size(&self) -> usize {
-        match self {
+        match *self {
             DES_CBC => 8,
             DES_EDE3_CBC => 24,
             AES_128_CBC => 16,
@@ -43,7 +43,7 @@ impl RFC1423Algorithm {
         }
     }
     pub fn block_size(&self) -> usize {
-        match self {
+        match *self {
             DES_CBC => 8,
             DES_EDE3_CBC => 8,
             AES_128_CBC => 16,
@@ -167,7 +167,7 @@ pub fn parse_hex(i: &[u8]) -> ::nom::IResult<&[u8], Vec<u8>> {
 
 impl fmt::Display for RFC1423Algorithm {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
+        match *self {
             DES_CBC => write!(f, "DES-CBC"),
             DES_EDE3_CBC => write!(f, "DES-EDE3-CBC"),
             AES_128_CBC => write!(f, "AES-128-CBC"),
@@ -180,12 +180,12 @@ impl fmt::Display for RFC1423Algorithm {
 impl<'a> fmt::Display for HeaderEntry<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            HeaderEntry::ProcType(l, t) => { write!(f, "Proc-Type: {},{:?}", l, t) }
-            HeaderEntry::DEKInfo(alg, v) => {
+            &HeaderEntry::ProcType(ref l,ref t) => { write!(f, "Proc-Type: {},{:?}", l, t) }
+            &HeaderEntry::DEKInfo(ref alg, ref v) => {
                 write!(f, "DEK-Info: {},", alg)?;
                 write_hex(f, &v)
             }
-            HeaderEntry::Entry(key, values) => {
+            &HeaderEntry::Entry(ref key, ref values) => {
                 write!(f, "{}: ", key)?;
                 let mut pos: usize = key.len() + 2;
                 for (i, v) in values.iter().enumerate() {

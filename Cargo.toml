@@ -1,6 +1,6 @@
 [package]
 name = "nom_pem"
-version = "1.0.2"
+version = "1.0.3"
 authors = ["d.maetzke@bpressure.net"]
 include = ["LICENSE", ".gitignore", "Cargo.toml", "src/*.rs", "README.md"]
 description = "PEM parser (rfc1421) based of nom"

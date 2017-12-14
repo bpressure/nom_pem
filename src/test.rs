@@ -46,8 +46,8 @@ dXd/H5LMDWnonNvPCwQUHt==
     assert_eq!(result.data.len(), 160);
     assert_eq!(result.headers.len(), 8);
     let dekinfo = &result.headers[2];
-    match dekinfo {
-        HeaderEntry::DEKInfo(alg, iv) => {
+    match *dekinfo {
+        HeaderEntry::DEKInfo(ref alg, ref iv) => {
             assert_eq!(&RFC1423Algorithm::DES_CBC, alg);
             assert_eq!(8, alg.block_size());
             assert_eq!(8, alg.key_size());

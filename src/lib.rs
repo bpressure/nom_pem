@@ -31,7 +31,6 @@
 //!```
 //!
 //!
-#![feature(match_default_bindings)]
 #[macro_use]
 extern crate nom;
 
