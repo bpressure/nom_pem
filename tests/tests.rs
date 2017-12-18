@@ -1,4 +1,6 @@
-use super::*;
+extern crate nom_pem;
+
+use nom_pem::*;
 
 #[test]
 fn read_block1() {

@@ -46,28 +46,27 @@ use self::display::{write_base64, write_headers};
 use std::fmt;
 use nom::IResult::*;
 
-#[cfg(test)]
-mod test;
-
 /// structure representing one PEM block
 #[derive(Debug)]
 pub struct Block<'a> {
     pub block_type: &'a str,
     pub headers: Vec<HeaderEntry<'a>>,
-    pub data: Vec<u8>
+    pub data: Vec<u8>,
 }
 
 
 #[derive(Debug)]
 pub enum PemParsingError {
-    NomError(nom::Err),
-    Incomplete(nom::Needed)
+    NomError(String)
 }
 
 pub fn decode_block<'a>(input: &[u8]) -> Result<Block, PemParsingError> {
     match pem_block(input) {
-        Error(e) => Err(PemParsingError::NomError(e)),
-        Incomplete(_i) => Err(PemParsingError::Incomplete(_i)),
+        Error(e) => {
+            let error_kind = e.into_error_kind();
+            Err(PemParsingError::NomError(String::from(error_kind.description())))
+        }
+        Incomplete(_i) => Err(PemParsingError::NomError(format!("incomplete: {:?}", _i))),
         Done(_rest, block) => Ok(block)
     }
 }
@@ -75,8 +74,11 @@ pub fn decode_block<'a>(input: &[u8]) -> Result<Block, PemParsingError> {
 
 pub fn decode_blocks<'a>(input: &[u8]) -> Result<Vec<Block>, PemParsingError> {
     match pem_blocks(input) {
-        Error(e) => Err(PemParsingError::NomError(e)),
-        Incomplete(_i) => Err(PemParsingError::Incomplete(_i)),
+        Error(e) => {
+            let error_kind = e.into_error_kind();
+            Err(PemParsingError::NomError(String::from(error_kind.description())))
+        }
+        Incomplete(_i) => Err(PemParsingError::NomError(format!("incomplete: {:?}", _i))),
         Done(_rest, block) => Ok(block)
     }
 }
