@@ -1,3 +1,9 @@
+ # nom_pem
+ 
+ [![LICENSE](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+ [![Build Status](https://travis-ci.org/bpressure/nom_pem.svg?branch=master)](https://travis-ci.org/bpressure/nom_pem)
+ [![Crates.io Version](https://img.shields.io/crates/v/nom_pem.svg)](https://crates.io/crates/nom_pem)
+ 
  Rust Crate implements PEM data encoding and parsing, which originated in Privacy Enhanced Mail.
  See RFC 1421 for details.
  It supports PEM messages with headers as well as without.
