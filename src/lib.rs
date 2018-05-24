@@ -44,7 +44,7 @@ pub use self::headers::{HeaderEntry, RFC1423Algorithm, ProcTypeType};
 use self::headers::*;
 use self::display::{write_base64, write_headers};
 use std::fmt;
-use nom::IResult::*;
+use nom::Err;
 
 /// structure representing one PEM block
 #[derive(Debug)]
@@ -62,24 +62,24 @@ pub enum PemParsingError {
 
 pub fn decode_block<'a>(input: &[u8]) -> Result<Block, PemParsingError> {
     match pem_block(input) {
-        Error(e) => {
+        Err(Err::Error(e)) | Err(Err::Failure(e)) => {
             let error_kind = e.into_error_kind();
             Err(PemParsingError::NomError(String::from(error_kind.description())))
         }
-        Incomplete(_i) => Err(PemParsingError::NomError(format!("incomplete: {:?}", _i))),
-        Done(_rest, block) => Ok(block)
+        Err(Err::Incomplete(_i)) => Err(PemParsingError::NomError(format!("incomplete: {:?}", _i))),
+        Ok((_rest, block)) => Ok(block)
     }
 }
 
 
 pub fn decode_blocks<'a>(input: &[u8]) -> Result<Vec<Block>, PemParsingError> {
     match pem_blocks(input) {
-        Error(e) => {
+        Err(Err::Error(e)) | Err(Err::Failure(e)) => {
             let error_kind = e.into_error_kind();
             Err(PemParsingError::NomError(String::from(error_kind.description())))
         }
-        Incomplete(_i) => Err(PemParsingError::NomError(format!("incomplete: {:?}", _i))),
-        Done(_rest, block) => Ok(block)
+        Err(Err::Incomplete(_i)) => Err(PemParsingError::NomError(format!("incomplete: {:?}", _i))),
+        Ok((_rest, block)) => Ok(block)
     }
 }
 

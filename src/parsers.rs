@@ -9,16 +9,16 @@ pub fn pem_dashed_string(i: &[u8]) -> ::nom::IResult<&[u8], &str> {
     let mut found = 0;
     for pos in 0..i.len() {
         let b = i[pos];
-        if b == 13 { return ::nom::IResult::Error(::nom::ErrorKind::CrLf); }
+        if b == 13 { return Err(Err::Error(error_position!(i, ::nom::ErrorKind::CrLf))); }
         if b == 45 { found += 1 } else { found = 0 }
         if found == 5 {
             match str::from_utf8(&i[..(pos - 4)]) {
-                Ok(s) => return ::nom::IResult::Done(&i[(pos + 1)..], s),
-                Err(_) => return ::nom::IResult::Error(::nom::ErrorKind::Alpha)
+                Ok(s) => return Ok((&i[(pos + 1)..], s)),
+                Err(_) => return Err(Err::Error(error_position!(i, ::nom::ErrorKind::Alpha)))
             }
         }
     }
-    ::nom::IResult::Incomplete(::nom::Needed::Size(5 - found))
+    Err(Err::Incomplete(::nom::Needed::Size(5 - found)))
 }
 
 named!(pub pem_begin<&str>, do_parse!(
@@ -56,11 +56,11 @@ pub fn base64(input: &[u8]) -> ::nom::IResult<&[u8], Vec<u8>> {
         }
     }
     while pos < input.len() && input[pos] == 61 { pos += 1 } // remove the padding
-    ::nom::IResult::Done(&input[pos..], ret)
+    Ok((&input[pos..], ret))
 }
 
 pub fn no_pem_headers(i: &[u8]) -> ::nom::IResult<&[u8], Vec<HeaderEntry>> {
-    ::nom::IResult::Done(i, Vec::new())
+    Ok((i, Vec::new()))
 }
 
 named!(pub str_end_of_line<String>, do_parse!(
