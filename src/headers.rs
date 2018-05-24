@@ -159,9 +159,9 @@ pub fn parse_hex(i: &[u8]) -> ::nom::IResult<&[u8], Vec<u8>> {
         pos += 1;
     }
     if high {
-        return ::nom::IResult::Done(&i[pos..], ret);
+        return Ok((&i[pos..], ret));
     } else {
-        return ::nom::IResult::Incomplete(Size(1));
+        return Err(::nom::Err::Incomplete(Size(1)));
     }
 }
 
@@ -233,13 +233,13 @@ fn write_hex_char(f: &mut fmt::Formatter, b: u8) -> fmt::Result {
 #[cfg(test)]
 #[test]
 fn hex() {
-    assert_eq!(::nom::IResult::Done(&[45][..],
-                                    vec!(0u8, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f)),
+    assert_eq!(Ok((&[45][..],
+                                    vec!(0u8, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f))),
                parse_hex(b"000102030405060708090a0b0c0d0e0f-"));
-    assert_eq!(::nom::IResult::Done(&[45][..],
-                                    vec!(0x11u8, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff)),
+    assert_eq!(Ok((&[45][..],
+                                    vec!(0x11u8, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff))),
                parse_hex(b"112233445566778899AABBCCDDEEFF-"));
     use nom::Needed::*;
-    assert_eq!(::nom::IResult::Incomplete(Size(1)),
+    assert_eq!(Err(::nom::Err::Incomplete(Size(1))),
                parse_hex(b"112233445566778899AABBCCDDEEFFF-"));
 }
