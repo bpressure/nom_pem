@@ -33,21 +33,27 @@
 //!
 #[macro_use]
 extern crate nom;
+#[cfg(not(std))]
+extern crate core;
 
 mod parsers;
+
+mod base64;
+
+pub use parsers::{pem_block, pem_blocks};
+
+use nom::Err as NomErr;
+
 mod headers;
+
+pub use headers::{HeaderEntry, RFC1423Algorithm, ProcTypeType};
+
 mod display;
 
-use std::str;
-use self::parsers::*;
-pub use self::headers::{HeaderEntry, RFC1423Algorithm, ProcTypeType};
-use self::headers::*;
-use self::display::{write_base64, write_headers};
-use std::fmt;
-use nom::IResult::*;
+use display::{write_base64, write_headers};
 
 /// structure representing one PEM block
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Block<'a> {
     pub block_type: &'a str,
     pub headers: Vec<HeaderEntry<'a>>,
@@ -62,26 +68,39 @@ pub enum PemParsingError {
 
 pub fn decode_block<'a>(input: &[u8]) -> Result<Block, PemParsingError> {
     match pem_block(input) {
-        Error(e) => {
+        Err(NomErr::Error(e)) => {
             let error_kind = e.into_error_kind();
             Err(PemParsingError::NomError(String::from(error_kind.description())))
         }
-        Incomplete(_i) => Err(PemParsingError::NomError(format!("incomplete: {:?}", _i))),
-        Done(_rest, block) => Ok(block)
+        Err(NomErr::Failure(e)) => {
+            let error_kind = e.into_error_kind();
+            Err(PemParsingError::NomError(String::from(error_kind.description())))
+        }
+        Err(NomErr::Incomplete(_i)) => Err(PemParsingError::NomError(format!("incomplete: {:?}", _i))),
+        Ok((_rest, block)) => Ok(block),
     }
 }
 
 
 pub fn decode_blocks<'a>(input: &[u8]) -> Result<Vec<Block>, PemParsingError> {
     match pem_blocks(input) {
-        Error(e) => {
+        Err(NomErr::Error(e)) => {
             let error_kind = e.into_error_kind();
             Err(PemParsingError::NomError(String::from(error_kind.description())))
         }
-        Incomplete(_i) => Err(PemParsingError::NomError(format!("incomplete: {:?}", _i))),
-        Done(_rest, block) => Ok(block)
+        Err(NomErr::Failure(e)) => {
+            let error_kind = e.into_error_kind();
+            Err(PemParsingError::NomError(String::from(error_kind.description())))
+        }
+        Err(NomErr::Incomplete(_i)) => Err(PemParsingError::NomError(format!("incomplete: {:?}", _i))),
+        Ok((_rest, blocks)) => Ok(blocks),
     }
 }
+
+#[cfg(not(std))]
+use core::fmt;
+#[cfg(std)]
+use std::fmt;
 
 impl<'a> fmt::Display for Block<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -1,3 +1,6 @@
+#[cfg(not(std))]
+use core::fmt;
+#[cfg(std)]
 use std::fmt;
 use super::HeaderEntry;
 

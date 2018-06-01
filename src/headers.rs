@@ -1,12 +1,20 @@
+#[cfg(not(std))]
+use core::str;
+#[cfg(std)]
 use std::str;
-use super::{spaces, multi_line, str_end_of_line};
+#[cfg(not(std))]
+use core::fmt;
+#[cfg(std)]
 use std::fmt;
+
+
+use nom::{IResult, Err, Needed, is_space};
 
 #[derive(Debug, PartialEq)]
 pub enum HeaderEntry<'a> {
     ProcType(u8, ProcTypeType),
     DEKInfo(RFC1423Algorithm, Vec<u8>),
-    Entry(&'a str, Vec<String>)
+    Entry(&'a str, Vec<String>),
 }
 
 #[repr(u8)]
@@ -16,7 +24,7 @@ pub enum ProcTypeType {
     ENCRYPTED,
     MIC_ONLY,
     MIC_CLEAR,
-    CRL
+    CRL,
 }
 
 #[repr(u8)]
@@ -27,8 +35,14 @@ pub enum RFC1423Algorithm {
     DES_EDE3_CBC,
     AES_128_CBC,
     AES_192_CBC,
-    AES_256_CBC
+    AES_256_CBC,
 }
+
+named!(pub pem_header<HeaderEntry>,  alt!(
+     pem_header_proctype |
+     pem_header_dekinfo |
+     pem_header_key_value
+     ));
 
 use RFC1423Algorithm::*;
 
@@ -79,7 +93,7 @@ named!(pub pem_header_proctype<HeaderEntry>,  do_parse!(
     code: u8_digit >>
     tag!(",") >>
     t: pem_proctype >>
-    value: pem_header_value >>
+    _value: pem_header_value >>
     (HeaderEntry::ProcType(code, t))
     ));
 
@@ -115,11 +129,7 @@ named!(pub pem_header_key_value<HeaderEntry>,  do_parse!(
     values: pem_header_value >>
     (HeaderEntry::Entry(key, values))
     ));
-named!(pub pem_header<HeaderEntry>,  alt!(
-     pem_header_proctype |
-     pem_header_dekinfo |
-     pem_header_key_value
-     ));
+
 named!(pub pem_headers<Vec<HeaderEntry>>, do_parse!(
     headers: many1!(pem_header) >>
     tag!("\n") >>
@@ -127,8 +137,6 @@ named!(pub pem_headers<Vec<HeaderEntry>>, do_parse!(
     ));
 
 pub fn parse_hex(i: &[u8]) -> ::nom::IResult<&[u8], Vec<u8>> {
-    use nom::Needed::*;
-
     let mut high = true;
     let mut register = 0u8;
     let mut ret: Vec<u8> = Vec::new();
@@ -159,9 +167,9 @@ pub fn parse_hex(i: &[u8]) -> ::nom::IResult<&[u8], Vec<u8>> {
         pos += 1;
     }
     if high {
-        return ::nom::IResult::Done(&i[pos..], ret);
+        return Ok((&i[pos..], ret));
     } else {
-        return ::nom::IResult::Incomplete(Size(1));
+        return Err(Err::Incomplete(Needed::Size(1)));
     }
 }
 
@@ -180,7 +188,7 @@ impl fmt::Display for RFC1423Algorithm {
 impl<'a> fmt::Display for HeaderEntry<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            &HeaderEntry::ProcType(ref l,ref t) => { write!(f, "Proc-Type: {},{:?}", l, t) }
+            &HeaderEntry::ProcType(ref l, ref t) => { write!(f, "Proc-Type: {},{:?}", l, t) }
             &HeaderEntry::DEKInfo(ref alg, ref v) => {
                 write!(f, "DEK-Info: {},", alg)?;
                 write_hex(f, &v)
@@ -233,13 +241,52 @@ fn write_hex_char(f: &mut fmt::Formatter, b: u8) -> fmt::Result {
 #[cfg(test)]
 #[test]
 fn hex() {
-    assert_eq!(::nom::IResult::Done(&[45][..],
-                                    vec!(0u8, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f)),
+    assert_eq!(Ok((&[45][..], vec!(0u8, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f))),
                parse_hex(b"000102030405060708090a0b0c0d0e0f-"));
-    assert_eq!(::nom::IResult::Done(&[45][..],
-                                    vec!(0x11u8, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff)),
+    assert_eq!(Ok((&[45][..], vec!(0x11u8, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff))),
                parse_hex(b"112233445566778899AABBCCDDEEFF-"));
-    use nom::Needed::*;
-    assert_eq!(::nom::IResult::Incomplete(Size(1)),
+    assert_eq!(Err(Err::Incomplete(Needed::Size(1))),
                parse_hex(b"112233445566778899AABBCCDDEEFFF-"));
+}
+
+
+named!(pub str_end_of_line<String>, do_parse!(
+s: map_res!(map_res!(take_till!(is_nl),str::from_utf8),str::FromStr::from_str) >>
+take!(1) >>
+(s)
+));
+
+named!(pub str_second_line<String>, do_parse!(
+tag!(" ") >>  // all following lines of a header value has to start with a space
+spaces >>
+s: str_end_of_line >>
+(s)
+));
+
+
+
+named!(pub multi_line<String>, do_parse!(
+s1: str_end_of_line >>
+s: fold_many1!(str_second_line, s1, |a: String,b: String| {
+    a+&b
+ }) >>
+(s)
+));
+
+
+#[inline(always)]
+fn spaces(i: &[u8]) -> IResult<&[u8], ()> {
+    for pos in 0..i.len() {
+        let b = i[pos];
+        if is_space(b) {
+            continue;
+        }
+        return Ok((&i[pos..], ()));
+    }
+    Ok((i, ()))
+}
+
+#[inline]
+pub fn is_nl(chr: u8) -> bool {
+    chr == 10
 }

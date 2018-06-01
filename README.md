@@ -35,3 +35,6 @@ let block = nom_pem::decode_block(b).unwrap();
 assert_eq!(block.block_type, "PRIVACY-ENHANCED MESSAGE");
 assert_eq!(block.data.len(), 160);
 ```
+
+
+## nom v4 compatible

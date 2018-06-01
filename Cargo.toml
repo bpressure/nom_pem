@@ -1,13 +1,17 @@
 [package]
 name = "nom_pem"
-version = "1.0.4"
+version = "4.0.0"
 authors = ["d.maetzke@bpressure.net"]
 include = ["LICENSE", ".gitignore", "Cargo.toml", "src/*.rs", "README.md"]
 description = "PEM parser (rfc1421) based of nom"
-keywords = ["parser", "parsing", "pem", "rfc1421", "nom" ]
+keywords = ["parser", "parsing", "pem", "rfc1421", "nom" , "nom4"]
 categories = ["parsing"]
 license = "MIT"
 repository = "https://github.com/bpressure/nom_pem"
 
 [dependencies]
-nom = "^3.2"
+nom = "^4.0"
+
+[features]
+default = ["std"]
+std = []
