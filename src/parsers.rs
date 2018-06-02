@@ -3,7 +3,7 @@ static PEM_END: &'static [u8] = b"-----END ";
 
 use nom::*;
 use super::{Block, base64, HeaderEntry};
-use std::ops::{Range, RangeFrom, RangeTo};
+use std::ops::RangeFrom;
 use super::headers::pem_headers;
 use std::str::from_utf8;
 
