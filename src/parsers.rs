@@ -1,12 +1,10 @@
 static PEM_START: &'static [u8] = b"-----BEGIN ";
 static PEM_END: &'static [u8] = b"-----END ";
 
-use nom::{IResult, Err, Needed, ErrorKind, is_space, line_ending};
+use nom::*;
 use super::{Block, base64, HeaderEntry};
+use std::ops::{Range, RangeFrom, RangeTo};
 use super::headers::pem_headers;
-#[cfg(not(std))]
-use core::str::from_utf8;
-#[cfg(std)]
 use std::str::from_utf8;
 
 fn pem_dashed_string(i: &[u8]) -> IResult<&[u8], &str> {
@@ -47,6 +45,8 @@ fn test_pem_begin() {
 
     assert_eq!(Ok((&[88][..], "PUBLIC KEY")), pem_begin(b"-----BEGIN PUBLIC KEY-----
 X"));
+    /*    assert_eq!(Ok(("X", "PUBLIC KEY")), pem_begin("-----BEGIN PUBLIC KEY-----
+    X"));*/
     let _c = Context::Code(&[45u8, 45, 45, 45, 66, 69, 71, 73, 78, 32, 80, 85, 66, 76, 73, 67, 32, 75, 69, 89, 45, 45, 45, 45, 45][..], ErrorKind::Tag);
     assert_eq!(Err(Err::Error(_c)), pem_begin(b"----BEGIN PUBLIC KEY-----"));
     let _c = Context::Code(&[80u8, 85, 66, 76, 73, 67, 32, 75, 69, 89, 45, 45, 45, 45, 10, 120][..], ErrorKind::Custom(0xbb0004));
@@ -60,13 +60,17 @@ X"));
 }
 
 #[inline(always)]
-fn cleanup_spaces(i: &[u8]) -> IResult<&[u8], ()> {
-    for pos in 0..i.len() {
-        let b = i[pos];
-        if b == 10 || b == 13 || b == 32 {
+fn cleanup_spaces<T>(i: T) -> IResult<T, ()> where
+    T: Slice<RangeFrom<usize>>,
+    T: InputIter,
+    <T as InputIter>::Item: AsChar,
+{
+    for (pos, item) in i.iter_elements().enumerate() {
+        let b = item.as_char();
+        if b == '\r' || b == '\n' || b == ' ' {
             continue;
         }
-        return Ok((&i[pos..], ()));
+        return Ok((i.slice(pos..), ()));
     }
     Ok((i, ()))
 }
@@ -74,13 +78,14 @@ fn cleanup_spaces(i: &[u8]) -> IResult<&[u8], ()> {
 #[cfg(test)]
 #[test]
 fn test_cleanup_spaces() {
-    assert_eq!(Ok((&[88, 89, 90][..], ())), cleanup_spaces(b"  XYZ"));
-    assert_eq!(Ok((&[88, 89, 88][..], ())), cleanup_spaces(b"
- XYX"));
+    assert_eq!(Ok((&[88, 89, 90][..], ())), cleanup_spaces(&b"  XYZ"[..]));
+    assert_eq!(Ok(("XYZ", ())), cleanup_spaces("  XYZ"));
+    assert_eq!(Ok((&[88, 89, 88][..], ())), cleanup_spaces(&b"
+ XYX"[..]));
 }
 
-named!(pub pem_footer<&str>, do_parse!(
-    tag!(PEM_END) >>
+named!( pub pem_footer <&str>, do_parse ! (
+    tag ! (PEM_END) >>
     s: pem_dashed_string >>
     cleanup_spaces >>
     (s)
@@ -94,17 +99,17 @@ X"));
 }
 
 pub fn no_pem_headers(i: &[u8]) -> ::nom::IResult<&[u8], Vec<HeaderEntry>> {
-  Ok((i, Vec::new()))
+    Ok((i, Vec::new()))
 }
 
 
-named!(pub pem_block<Block>,  do_parse!(
+named!( pub pem_block < Block >, do_parse! (
     block_type: pem_begin >>
-    headers: alt!(pem_headers|no_pem_headers) >>
-    data : ws!(base64::base64) >>
+    headers: alt! (pem_headers | no_pem_headers) >>
+    data: ws ! (base64::base64) >>
     pem_footer >>
     (Block{block_type, headers, data})
 ));
 
-named!(pub pem_blocks<Vec<Block>>, many1!(pem_block));
+named!( pub pem_blocks <Vec < Block > >, many1 ! (pem_block));
 
