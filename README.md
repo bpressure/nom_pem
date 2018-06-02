@@ -37,4 +37,8 @@ assert_eq!(block.data.len(), 160);
 ```
 
 
-## nom v4 compatible
+### Changelog
+#### 4.0.1
+ - made internal base64 decoder compatible with nom InputIter/Slice traits
+#### 4.0
+ - nom v4 compatible
